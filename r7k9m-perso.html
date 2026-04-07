@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relations</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0e0e10;color:#e8e8f0;font-family:'Courier New',monospace;font-size:14px;min-height:100vh;}
+header{padding:12px 16px;border-bottom:1px solid #2a2a35;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;position:sticky;top:0;background:#0e0e10;z-index:100;}
+.brand{font-family:Georgia,serif;font-size:19px;}.brand span{color:#c77dff;}
+.tabs{display:flex;gap:3px;flex-wrap:wrap;}
+.tab{padding:6px 9px;border:1px solid #2a2a35;background:transparent;color:#a0a0b8;font-family:'Courier New',monospace;font-size:10px;cursor:pointer;border-radius:4px;text-transform:uppercase;letter-spacing:0.5px;}
+.tab.active{background:#c77dff;border-color:#c77dff;color:#fff;}
+main{padding:14px;max-width:620px;margin:0 auto;}
+.view{display:none;}.view.active{display:block;}
+
+/* COMPARE */
+.prog-row{display:flex;justify-content:space-between;margin-bottom:5px;}
+.prog-label{color:#6b6b80;font-size:11px;text-transform:uppercase;letter-spacing:1px;}
+.prog-bar{background:#2a2a35;height:3px;border-radius:2px;margin-bottom:18px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,#e8a838,#c77dff);transition:width 0.4s;}
+.steps{display:flex;gap:8px;justify-content:center;margin-bottom:14px;}
+.step-dot{width:10px;height:10px;border-radius:50%;border:1px solid #2a2a35;background:transparent;}
+.step-dot.active{background:#e8a838;border-color:#e8a838;}
+.step-dot.done{background:#4ea8de;border-color:#4ea8de;}
+.dim-title{text-align:center;margin-bottom:18px;}
+.dim-title h2{font-family:Georgia,serif;font-size:30px;font-weight:400;}
+.dim-title p{color:#6b6b80;font-size:12px;margin-top:5px;}
+.duel{display:flex;flex-direction:column;gap:10px;margin-bottom:12px;}
+.choice-btn{background:#16161a;border:1px solid #2a2a35;border-radius:12px;padding:20px 16px;cursor:pointer;color:#e8e8f0;font-family:'Courier New',monospace;font-size:18px;text-align:center;width:100%;transition:all 0.15s;}
+.choice-btn:active{border-color:#e8a838;background:#1e1e24;}
+.choice-btn.prob:active{border-color:#4ea8de;}
+.vs-sep{text-align:center;color:#3a3a45;font-size:11px;letter-spacing:2px;}
+.tie-btn{display:block;width:100%;margin-bottom:12px;background:transparent;border:1px dashed #2a2a35;color:#6b6b80;padding:11px 16px;border-radius:8px;font-family:'Courier New',monospace;font-size:14px;cursor:pointer;}
+.sel-box{background:#1e1e24;border:1px solid #2a2a35;border-radius:8px;padding:9px 12px;margin-bottom:11px;display:flex;gap:14px;flex-wrap:wrap;}
+.sel-item{display:flex;gap:5px;align-items:center;}
+.sel-label{color:#6b6b80;font-size:10px;text-transform:uppercase;letter-spacing:1px;}
+.sel-val-e{color:#e8a838;font-size:13px;}
+.sel-val-empty{color:#3a3a45;font-size:13px;}
+.action-row{display:flex;justify-content:center;}
+.btn-ghost{padding:11px 26px;border-radius:8px;font-family:'Courier New',monospace;font-size:13px;cursor:pointer;border:1px solid #2a2a35;background:transparent;color:#6b6b80;}
+.done-panel{background:#16161a;border:1px solid #2a2a35;border-radius:10px;padding:32px 16px;text-align:center;}
+.done-panel h2{font-family:Georgia,serif;font-size:21px;font-weight:400;margin-bottom:9px;}
+.done-panel p{color:#6b6b80;font-size:12px;margin-bottom:18px;}
+.btn-primary{padding:11px 22px;border-radius:8px;font-family:'Courier New',monospace;font-size:13px;cursor:pointer;border:1px solid #c77dff;background:#c77dff;color:#fff;}
+
+/* CARDS & SHARED */
+.card{background:#16161a;border:1px solid #2a2a35;border-radius:10px;overflow:hidden;margin-bottom:12px;}
+.card-head{padding:11px 14px;border-bottom:1px solid #2a2a35;display:flex;align-items:center;gap:8px;}
+.card-title{font-family:Georgia,serif;font-size:15px;font-weight:400;}
+.card-sub{font-size:10px;color:#6b6b80;margin-top:1px;}
+.section-title{font-family:Georgia,serif;font-size:16px;font-weight:400;margin-bottom:10px;margin-top:4px;}
+.stats-bar{display:flex;gap:14px;flex-wrap:wrap;padding:11px 14px;background:#16161a;border:1px solid #2a2a35;border-radius:8px;margin-bottom:12px;}
+.stat-val{font-family:Georgia,serif;font-size:19px;display:block;}
+.stat-lab{font-size:10px;color:#6b6b80;text-transform:uppercase;letter-spacing:1px;}
+
+/* RANKINGS */
+.rank-grid{display:flex;flex-direction:column;gap:14px;}
+.rank-item{display:flex;align-items:flex-start;gap:7px;padding:9px 12px;border-bottom:1px solid #1a1a20;flex-wrap:wrap;}
+.rank-item:last-child{border-bottom:none;}
+.rank-num{font-size:11px;color:#6b6b80;width:20px;text-align:right;flex-shrink:0;padding-top:2px;}
+.rank-name{flex:1;font-size:13px;min-width:80px;}
+.rank-icons{font-size:12px;width:100%;padding-left:27px;line-height:1.6;word-break:break-word;}
+.rank-score{font-size:12px;flex-shrink:0;}
+.rel-badge{font-size:9px;padding:1px 4px;border-radius:3px;margin-left:3px;vertical-align:middle;}
+.rel-high{background:rgba(86,207,133,0.15);color:#56cf85;}
+.rel-mid{background:rgba(232,168,56,0.15);color:#e8a838;}
+.rel-low{background:rgba(255,107,107,0.15);color:#ff6b6b;}
+.rank-legend{margin-top:10px;background:#16161a;border:1px solid #2a2a35;border-radius:8px;padding:11px 14px;}
+.rank-legend-title{font-size:10px;color:#6b6b80;text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;}
+.rank-legend-items{display:flex;flex-wrap:wrap;gap:7px;}
+.rank-legend-item{font-size:12px;color:#a0a0b8;}
+
+/* SCORE GLOBAL TABLE */
+.score-table{width:100%;border-collapse:collapse;font-size:12px;}
+.score-table th{padding:7px 10px;text-align:left;font-size:10px;color:#6b6b80;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #2a2a35;cursor:pointer;}
+.score-table th:hover{color:#e8e8f0;}
+.score-table td{padding:8px 10px;border-bottom:1px solid #1a1a20;}
+.score-table tr:last-child td{border-bottom:none;}
+.score-bar{height:4px;border-radius:2px;background:#c77dff;margin-top:3px;}
+
+/* WEIGHTS */
+.weights-card{background:#16161a;border:1px solid #2a2a35;border-radius:10px;padding:14px;margin-bottom:12px;}
+.weights-title{font-size:10px;color:#6b6b80;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+.weight-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.weight-label{font-size:12px;width:120px;flex-shrink:0;}
+.weight-slider{flex:1;accent-color:#c77dff;}
+.weight-val{font-size:12px;color:#c77dff;width:36px;text-align:right;}
+.weight-total{font-size:11px;color:#6b6b80;text-align:right;margin-top:4px;}
+.weight-total.ok{color:#56cf85;}
+.weight-total.err{color:#ff6b6b;}
+
+/* MATRICE */
+.matrix-wrap{position:relative;width:100%;aspect-ratio:1;background:#16161a;border:1px solid #2a2a35;border-radius:10px;overflow:hidden;margin-bottom:10px;}
+.matrix-quadrant{position:absolute;display:flex;align-items:flex-end;padding:6px 8px;font-size:10px;color:#6b6b80;text-transform:uppercase;letter-spacing:0.5px;}
+.mq-tl{top:0;left:0;width:50%;height:50%;border-right:1px solid #2a2a35;border-bottom:1px solid #2a2a35;align-items:flex-start;}
+.mq-tr{top:0;right:0;width:50%;height:50%;border-bottom:1px solid #2a2a35;align-items:flex-start;justify-content:flex-end;}
+.mq-bl{bottom:0;left:0;width:50%;height:50%;border-right:1px solid #2a2a35;}
+.mq-br{bottom:0;right:0;width:50%;height:50%;justify-content:flex-end;}
+.matrix-dot{position:absolute;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:bold;cursor:pointer;transform:translate(-50%,50%);transition:all 0.2s;border:2px solid transparent;}
+.matrix-dot:hover{z-index:10;transform:translate(-50%,50%) scale(1.3);}
+.matrix-axis-x{position:absolute;bottom:50%;left:0;right:0;height:1px;background:#2a2a35;}
+.matrix-axis-y{position:absolute;left:50%;top:0;bottom:0;width:1px;background:#2a2a35;}
+.matrix-label-x{font-size:10px;color:#6b6b80;text-align:center;margin-top:4px;}
+.matrix-label-y{font-size:10px;color:#6b6b80;margin-bottom:4px;}
+.matrix-legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.matrix-legend-item{font-size:11px;color:#a0a0b8;display:flex;align-items:center;gap:4px;}
+.matrix-legend-dot{width:10px;height:10px;border-radius:50%;}
+
+/* RECOMMANDATIONS */
+.reco-card{background:#16161a;border:1px solid #2a2a35;border-radius:10px;overflow:hidden;margin-bottom:10px;}
+.reco-head{padding:10px 14px;border-bottom:1px solid #2a2a35;display:flex;align-items:center;gap:8px;font-family:Georgia,serif;font-size:14px;}
+.reco-item{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid #1a1a20;gap:8px;}
+.reco-item:last-child{border-bottom:none;}
+.reco-name{font-size:13px;flex:1;}
+.reco-reason{font-size:11px;color:#6b6b80;}
+
+/* PROFILES / NOTES */
+.profile-search{width:100%;background:#1e1e24;border:1px solid #2a2a35;border-radius:8px;padding:11px 14px;color:#e8e8f0;font-family:'Courier New',monospace;font-size:14px;outline:none;margin-bottom:10px;}
+.profile-search:focus{border-color:#c77dff;}
+.profile-card{background:#16161a;border:1px solid #2a2a35;border-radius:10px;overflow:hidden;margin-bottom:8px;}
+.profile-head{padding:13px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+.profile-name{font-size:15px;}
+.profile-scores{display:flex;gap:8px;font-size:11px;}
+.profile-body{border-top:1px solid #2a2a35;padding:13px 14px;display:none;}
+.profile-body.open{display:block;}
+.rating-row{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.rating-label{font-size:11px;color:#6b6b80;text-transform:uppercase;letter-spacing:1px;}
+.rating-desc{font-size:11px;color:#4ea8de;margin-bottom:4px;}
+.rating-stars{display:flex;gap:6px;}
+.star-btn{background:transparent;border:1px solid #2a2a35;border-radius:6px;padding:8px 12px;cursor:pointer;font-size:16px;transition:all 0.15s;}
+.star-btn.active{background:#c77dff;border-color:#c77dff;}
+.next-step-label{font-size:11px;color:#6b6b80;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.next-step-input{width:100%;background:#1e1e24;border:1px solid #2a2a35;border-radius:7px;padding:10px 12px;color:#e8e8f0;font-family:'Courier New',monospace;font-size:13px;outline:none;resize:none;min-height:60px;}
+.next-step-input:focus{border-color:#c77dff;}
+
+/* HISTORIQUE */
+.history-filter{width:100%;background:#1e1e24;border:1px solid #2a2a35;border-radius:8px;padding:11px 14px;color:#e8e8f0;font-family:'Courier New',monospace;font-size:14px;outline:none;margin-bottom:10px;}
+.history-filter:focus{border-color:#c77dff;}
+.history-item{display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid #1a1a20;flex-wrap:wrap;}
+.history-item:last-child{border-bottom:none;}
+.history-vs{flex:1;font-size:13px;line-height:1.5;}
+.history-result{font-size:11px;color:#6b6b80;flex-shrink:0;}
+.history-redo{background:transparent;border:1px solid #2a2a35;color:#6b6b80;padding:5px 10px;border-radius:5px;font-family:'Courier New',monospace;font-size:10px;cursor:pointer;}
+.history-redo:active{border-color:#c77dff;color:#c77dff;}
+
+/* EXPERIENCES */
+.exp-search{width:100%;background:#1e1e24;border:1px solid #2a2a35;border-radius:8px;padding:11px 14px;color:#e8e8f0;font-family:'Courier New',monospace;font-size:14px;outline:none;margin-bottom:10px;}
+.exp-search:focus{border-color:#c77dff;}
+.person-exp-card{background:#16161a;border:1px solid #2a2a35;border-radius:10px;overflow:hidden;margin-bottom:8px;}
+.person-exp-head{padding:13px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+.person-exp-name{font-size:15px;}
+.person-exp-icons{font-size:15px;}
+.person-exp-body{border-top:1px solid #2a2a35;padding:12px 14px;display:none;}
+.person-exp-body.open{display:block;}
+.exp-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.exp-check{display:flex;align-items:center;gap:7px;padding:9px;border-radius:8px;cursor:pointer;border:1px solid #2a2a35;background:transparent;transition:all 0.15s;}
+.exp-check.checked{border-color:#c77dff;background:rgba(199,125,255,0.1);}
+.exp-check-emoji{font-size:17px;}
+.exp-check-label{font-size:11px;color:#6b6b80;flex:1;}
+.exp-check.checked .exp-check-label{color:#e8e8f0;}
+.glossaire-card{background:#16161a;border:1px solid #2a2a35;border-radius:10px;overflow:hidden;margin-bottom:10px;}
+.glossaire-head{padding:9px 14px;border-bottom:1px solid #2a2a35;font-size:10px;color:#6b6b80;text-transform:uppercase;letter-spacing:1px;}
+.glossaire-item{display:flex;align-items:center;gap:9px;padding:9px 14px;border-bottom:1px solid #1a1a20;}
+.glossaire-item:last-child{border-bottom:none;}
+.glos-emoji-input{background:#1e1e24;border:1px solid #2a2a35;border-radius:6px;padding:5px 7px;color:#e8e8f0;font-size:17px;width:50px;text-align:center;outline:none;font-family:inherit;}
+.glos-label-input{flex:1;background:#1e1e24;border:1px solid #2a2a35;border-radius:6px;padding:7px 9px;color:#e8e8f0;font-family:'Courier New',monospace;font-size:12px;outline:none;}
+.glos-emoji-input:focus,.glos-label-input:focus{border-color:#c77dff;}
+.glos-del{background:transparent;border:none;color:#6b6b80;cursor:pointer;font-size:17px;padding:3px 5px;}
+.btn-add-exp{width:100%;padding:11px;background:transparent;border:1px dashed #2a2a35;color:#6b6b80;border-radius:8px;font-family:'Courier New',monospace;font-size:12px;cursor:pointer;margin-bottom:14px;}
+
+/* MANAGE */
+.add-form{background:#16161a;border:1px solid #2a2a35;border-radius:10px;padding:14px;margin-bottom:12px;}
+.add-form h2{font-family:Georgia,serif;font-size:16px;font-weight:400;margin-bottom:3px;}
+.add-form p{color:#6b6b80;font-size:11px;margin-bottom:12px;}
+.field label{display:block;font-size:10px;color:#6b6b80;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
+.field input{width:100%;background:#1e1e24;border:1px solid #2a2a35;border-radius:8px;padding:11px 13px;color:#e8e8f0;font-family:'Courier New',monospace;font-size:15px;outline:none;margin-bottom:11px;}
+.field input:focus{border-color:#c77dff;}
+.person-list{background:#16161a;border:1px solid #2a2a35;border-radius:10px;overflow:hidden;margin-bottom:12px;}
+.person-list-head{padding:9px 14px;border-bottom:1px solid #2a2a35;font-size:10px;color:#6b6b80;text-transform:uppercase;letter-spacing:1px;display:flex;justify-content:space-between;}
+.person-row{display:flex;align-items:center;gap:7px;padding:10px 14px;border-bottom:1px solid #1a1a20;}
+.person-row:last-child{border-bottom:none;}
+.person-row.editing{background:#1e1e24;}
+.person-name{flex:1;font-size:13px;}
+.person-comps{font-size:10px;color:#6b6b80;}
+.icon-btn{background:transparent;border:none;cursor:pointer;font-size:15px;padding:3px 5px;border-radius:3px;}
+.edit-input{flex:1;background:#0e0e10;border:1px solid #4ea8de;border-radius:6px;padding:7px 11px;color:#e8e8f0;font-family:'Courier New',monospace;font-size:13px;outline:none;}
+.btn-save{background:#4ea8de;border:none;color:#fff;padding:7px 13px;border-radius:6px;font-family:'Courier New',monospace;font-size:11px;cursor:pointer;}
+.btn-cancel-sm{background:transparent;border:1px solid #2a2a35;color:#6b6b80;padding:7px 9px;border-radius:6px;font-family:'Courier New',monospace;font-size:11px;cursor:pointer;}
+.reset-zone{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;background:#16161a;border:1px solid #2a2a35;border-radius:8px;margin-bottom:12px;flex-wrap:wrap;}
+.reset-zone p{color:#6b6b80;font-size:11px;flex:1;}
+.btn-danger{background:transparent;border:1px solid rgba(255,107,107,0.4);color:#ff6b6b;padding:7px 13px;border-radius:6px;font-family:'Courier New',monospace;font-size:11px;cursor:pointer;}
+.backup-zone{background:#16161a;border:1px solid #2a2a35;border-radius:8px;overflow:hidden;margin-bottom:12px;}
+.backup-head{padding:9px 14px;border-bottom:1px solid #2a2a35;font-size:10px;color:#6b6b80;text-transform:uppercase;letter-spacing:1px;}
+.backup-body{padding:11px 14px;display:flex;flex-direction:column;gap:9px;}
+.backup-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.backup-row p{color:#6b6b80;font-size:11px;flex:1;}
+.btn-export{background:transparent;border:1px solid #4ea8de;color:#4ea8de;padding:7px 13px;border-radius:6px;font-family:'Courier New',monospace;font-size:11px;cursor:pointer;white-space:nowrap;}
+.btn-import-label{background:transparent;border:1px solid #e8a838;color:#e8a838;padding:7px 13px;border-radius:6px;font-family:'Courier New',monospace;font-size:11px;cursor:pointer;white-space:nowrap;display:inline-block;}
+#import-file{display:none;}
+.flash{position:fixed;bottom:18px;right:16px;background:#56cf85;color:#0e0e10;padding:9px 15px;border-radius:6px;font-size:12px;display:none;z-index:999;}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Relations<span>.</span></div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('compare',this)">Comparer</button>
+    <button class="tab" onclick="switchTab('rankings',this)">Classements</button>
+    <button class="tab" onclick="switchTab('matrix',this)">Matrice</button>
+    <button class="tab" onclick="switchTab('profiles',this)">Profils</button>
+    <button class="tab" onclick="switchTab('experiences',this)">Vécu</button>
+    <button class="tab" onclick="switchTab('history',this)">Historique</button>
+    <button class="tab" onclick="switchTab('manage',this)">Gérer</button>
+  </div>
+</header>
+<main>
+  <div id="view-compare" class="view active"><div id="compare-content"></div></div>
+  <div id="view-rankings" class="view"><div id="rankings-content"></div></div>
+  <div id="view-matrix" class="view"><div id="matrix-content"></div></div>
+  <div id="view-profiles" class="view"><div id="profiles-content"></div></div>
+  <div id="view-experiences" class="view"><div id="exp-content"></div></div>
+  <div id="view-history" class="view"><div id="history-content"></div></div>
+  <div id="view-manage" class="view">
+    <div class="add-form">
+      <h2>Ajouter une personne</h2>
+      <p>Elle sera intégrée dans les prochaines comparaisons.</p>
+      <div class="field">
+        <label>Prénom / Nom</label>
+        <input type="text" id="new-name" placeholder="ex. Sophie M." onkeydown="if(event.key==='Enter')addPerson()">
+      </div>
+      <button class="btn-primary" onclick="addPerson()">Ajouter</button>
+    </div>
+    <div class="person-list" id="person-list"></div>
+    <div class="reset-zone">
+      <p>Réinitialiser tous les scores (les noms sont conservés).</p>
+      <button class="btn-danger" onclick="resetScores()">Réinitialiser</button>
+    </div>
+    <div class="backup-zone">
+      <div class="backup-head">Sauvegarde JSON</div>
+      <div class="backup-body">
+        <div class="backup-row"><p>Exporte toutes tes données.</p><button class="btn-export" onclick="exportJSON()">↓ Exporter</button></div>
+        <div class="backup-row"><p>Restaure une sauvegarde.</p><label class="btn-import-label" for="import-file">↑ Importer</label><input type="file" id="import-file" accept=".json" onchange="importJSON(event)"></div>
+      </div>
+    </div>
+  </div>
+</main>
+<div class="flash" id="flash"></div>
+<script>
+// ===== DEFAULTS =====
+const DEFAULT_PEOPLE = [
+  "Sophie L.","Sylvie","Mariam","Léa","Céline J.","Peggy M.",
+  "Martine B.","Magali B.","Servane","Nathalie","Mélanie A.","Vanessa",
+  "Florence G.","Élise","Euratechnologies","Manon","Bernadette","Maelle",
+  "Manon G.","Loan","Renée","Catherine J.","Martine J.","Eva R.",
+  "Souaad","Marine","Aline C.","Coralie L.","Agathe G.","Nadine P.",
+  "Mathilde E.","Jenny","Julie V.","Charleen","Sarah","Émilie M.",
+  "Coralie J.","Livia","Titia","LN","Lisa","Nadège","Mélanie G.","Sophie D.",
+  "Sandrine D.","Elodie B.","Marie D.","Aline","Sophie C.",
+  "Camille R.","Sabrina L.","Aurore X.","Muriel","Justine"
+];
+const DEFAULT_EXP = [
+  {id:'e1',emoji:'☕',label:'Café / thé'},
+  {id:'e2',emoji:'🍽️',label:'Repas'},
+  {id:'e3',emoji:'🥂',label:'Soirée / verre'},
+  {id:'e4',emoji:'🏃',label:'Sport ensemble'},
+  {id:'e5',emoji:'🎵',label:'Musique / concert'},
+  {id:'e6',emoji:'✈️',label:'Voyage'},
+  {id:'e7',emoji:'💼',label:'Travail / projet pro'},
+  {id:'e8',emoji:'🎓',label:'Formation ensemble'},
+  {id:'e9',emoji:'🎉',label:'Événement / fête'},
+  {id:'e10',emoji:'🤝',label:'Networking'},
+  {id:'e11',emoji:'📞',label:'Appel / visio régulier'},
+  {id:'e12',emoji:'🏠',label:'Reçue chez moi ou elle'},
+];
+const MOMENTUM_ANCHORS = ['','Aucun contact récent','Contact rare','Échanges occasionnels','Échanges réguliers','Contact actif cette semaine'];
+const LOGISTIQUE_ANCHORS = ['','Très difficile (distance, dispo)','Difficile','Possible','Facile','Très facile et proche'];
+
+let _idc = Date.now();
+function makeId(){return 'p'+(++_idc);}
+function makeExpId(){return 'e'+(++_idc);}
+
+function defaultState(){
+  return {
+    people: DEFAULT_PEOPLE.map(n=>({id:makeId(),name:n})),
+    scores:{}, comparisons:{},
+    experiences: DEFAULT_EXP,
+    personExperiences:{},
+    profiles:{}, // {pid: {momentum:0, logistique:0, nextStep:''}}
+    weights:{envie:40,prob:30,momentum:20,logistique:10}
+  };
+}
+
+const KEY='relations_v4';
+function saveData(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+function loadData(){
+  try{
+    const raw=localStorage.getItem(KEY);
+    if(raw){
+      const p=JSON.parse(raw);
+      if(p.people&&p.people.length>0){
+        if(p.people.some(x=>!x.id||!x.id.startsWith('p')))return{...defaultState(),people:p.people.map(x=>({id:makeId(),name:x.name}))};
+        if(!p.experiences)p.experiences=DEFAULT_EXP;
+        if(!p.personExperiences)p.personExperiences={};
+        if(!p.profiles)p.profiles={};
+        if(!p.weights)p.weights={envie:40,prob:30,momentum:20,logistique:10};
+        return p;
+      }
+    }
+  }catch(e){}
+  return defaultState();
+}
+let state=loadData();
+
+// ===== UTILS =====
+function getName(id){const p=state.people.find(p=>p.id===id);return p?p.name:id;}
+function getWR(id,dim){const s=state.scores[id];if(!s)return 0;const c=s[dim+'_count']||0;return c===0?0:(s[dim]||0)/c;}
+function getPrio(id){return getWR(id,'envie')*getWR(id,'prob');}
+function getProfile(pid){return state.profiles[pid]||{momentum:0,logistique:0,nextStep:''};}
+
+function getGlobalScore(id){
+  const w=state.weights;
+  const total=w.envie+w.prob+w.momentum+w.logistique;
+  if(total===0)return 0;
+  const pr=getProfile(id);
+  const mom=(pr.momentum/5);
+  const log=(pr.logistique/5);
+  return (getWR(id,'envie')*w.envie + getWR(id,'prob')*w.prob + mom*w.momentum + log*w.logistique)/total;
+}
+
+function getTotalPairs(){const n=state.people.length;return n*(n-1)/2;}
+function getDonePairs(){return Object.keys(state.comparisons).length;}
+function getPendingPairs(){
+  const ids=state.people.map(p=>p.id),pairs=[];
+  for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++){
+    if(!state.comparisons[ids[i]+'|'+ids[j]]&&!state.comparisons[ids[j]+'|'+ids[i]])pairs.push([ids[i],ids[j]]);
+  }
+  for(let i=pairs.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pairs[i],pairs[j]]=[pairs[j],pairs[i]];}
+  return pairs;
+}
+function ensureScore(id){if(!state.scores[id])state.scores[id]={envie:0,prob:0,envie_count:0,prob_count:0};}
+function recordComparison(id1,id2,eW,pW){
+  state.comparisons[id1+'|'+id2]={envie:eW,prob:pW,ts:Date.now()};
+  ensureScore(id1);ensureScore(id2);
+  if(eW===id1)state.scores[id1].envie+=1;else if(eW===id2)state.scores[id2].envie+=1;else{state.scores[id1].envie+=0.5;state.scores[id2].envie+=0.5;}
+  state.scores[id1].envie_count++;state.scores[id2].envie_count++;
+  if(pW===id1)state.scores[id1].prob+=1;else if(pW===id2)state.scores[id2].prob+=1;else{state.scores[id1].prob+=0.5;state.scores[id2].prob+=0.5;}
+  state.scores[id1].prob_count++;state.scores[id2].prob_count++;
+  saveData();
+}
+function getPersonIcons(pid){
+  const ids=state.personExperiences[pid]||[];
+  return ids.map(eid=>{const e=state.experiences.find(x=>x.id===eid);return e?e.emoji:'';}).join('');
+}
+function showFlash(msg){const el=document.getElementById('flash');el.textContent=msg;el.style.display='block';setTimeout(()=>el.style.display='none',2000);}
+
+// ===== NAV =====
+function switchTab(view,btn){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  btn.classList.add('active');
+  const renders={compare:renderCompare,rankings:renderRankings,matrix:renderMatrix,profiles:renderProfiles,experiences:renderExperiences,history:renderHistory,manage:renderManage};
+  if(renders[view])renders[view]();
+}
+
+// ===== COMPARE =====
+let sessionPairs=[],sessionIdx=0,currentEnvie=null;
+function initSession(){sessionPairs=getPendingPairs().slice(0,10);sessionIdx=0;currentEnvie=null;}
+function renderCompare(){
+  const el=document.getElementById('compare-content');
+  const total=getTotalPairs(),done=getDonePairs(),pct=total>0?Math.round(done/total*100):100;
+  if(!sessionPairs.length||sessionIdx>=sessionPairs.length)initSession();
+  const pair=sessionPairs[sessionIdx];
+  if(!pair){
+    el.innerHTML=`<div class="done-panel"><h2>Toutes les comparaisons faites ✓</h2><p>${done} paires sur ${total}.</p><button class="btn-primary" onclick="switchTab('rankings',document.querySelectorAll('.tab')[1])">Voir les classements</button></div>`;
+    return;
+  }
+  const [id1,id2]=pair,step=currentEnvie?'prob':'envie';
+  el.innerHTML=`
+    <div class="prog-row"><span class="prog-label">Comp. ${sessionIdx+1}/${sessionPairs.length}</span><span class="prog-label">${done}/${total} (${pct}%)</span></div>
+    <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+    <div class="steps"><div class="step-dot ${!currentEnvie?'active':'done'}"></div><div class="step-dot ${currentEnvie?'active':''}"></div></div>
+    <div class="dim-title">
+      ${!currentEnvie?`<h2 style="color:#e8a838">Envie</h2><p>Avec qui as-tu le plus envie d'interagir ?</p>`:`<h2 style="color:#4ea8de">Probabilité</h2><p>Avec qui est-ce le plus réaliste ?</p>`}
+    </div>
+    <div class="duel">
+      <button class="choice-btn ${step}" onclick="choose('${id1}')">${getName(id1)}</button>
+      <div class="vs-sep">— vs —</div>
+      <button class="choice-btn ${step}" onclick="choose('${id2}')">${getName(id2)}</button>
+    </div>
+    <button class="tie-btn" onclick="chooseTie()">Égalité</button>
+    ${currentEnvie?`<div class="sel-box"><div class="sel-item"><span class="sel-label">Envie :</span><span class="sel-val-e">${currentEnvie==='tie'?'= Égalité':getName(currentEnvie)} ✓</span></div><div class="sel-item"><span class="sel-label">Probabilité :</span><span class="sel-val-empty">— à choisir</span></div></div>`:''}
+    <div class="action-row"><button class="btn-ghost" onclick="skipPair()">Passer</button></div>`;
+}
+function choose(id){if(!currentEnvie){currentEnvie=id;renderCompare();}else{validate(currentEnvie,id);}}
+function chooseTie(){if(!currentEnvie){currentEnvie='tie';renderCompare();}else{validate(currentEnvie,'tie');}}
+function validate(eW,pW){
+  const pair=sessionPairs[sessionIdx];recordComparison(pair[0],pair[1],eW,pW);
+  currentEnvie=null;sessionIdx++;
+  if(sessionIdx>=sessionPairs.length){sessionPairs=getPendingPairs().slice(0,10);sessionIdx=0;}
+  renderCompare();
+}
+function skipPair(){
+  currentEnvie=null;sessionIdx++;
+  if(sessionIdx>=sessionPairs.length){sessionPairs=getPendingPairs().slice(0,10);sessionIdx=0;}
+  renderCompare();
+}
+
+// ===== RANKINGS =====
+let rankSortBy='global';
+function renderRankings(){
+  const el=document.getElementById('rankings-content');
+  const total=getTotalPairs(),done=getDonePairs(),n=state.people.length;
+
+  // Weights editor
+  const w=state.weights;
+  const wtotal=w.envie+w.prob+w.momentum+w.logistique;
+  const wOk=Math.abs(wtotal-100)<1;
+
+  const weightsHtml=`<div class="weights-card">
+    <div class="weights-title">Pondérations du Score Global</div>
+    <div class="weight-row"><span class="weight-label">🔥 Envie</span><input type="range" class="weight-slider" min="0" max="100" value="${w.envie}" oninput="updateWeight('envie',+this.value)"><span class="weight-val" id="wv-envie">${w.envie}%</span></div>
+    <div class="weight-row"><span class="weight-label">📡 Probabilité</span><input type="range" class="weight-slider" min="0" max="100" value="${w.prob}" oninput="updateWeight('prob',+this.value)"><span class="weight-val" id="wv-prob">${w.prob}%</span></div>
+    <div class="weight-row"><span class="weight-label">⚡ Momentum</span><input type="range" class="weight-slider" min="0" max="100" value="${w.momentum}" oninput="updateWeight('momentum',+this.value)"><span class="weight-val" id="wv-momentum">${w.momentum}%</span></div>
+    <div class="weight-row"><span class="weight-label">🗺️ Logistique</span><input type="range" class="weight-slider" min="0" max="100" value="${w.logistique}" oninput="updateWeight('logistique',+this.value)"><span class="weight-val" id="wv-logistique">${w.logistique}%</span></div>
+    <div class="weight-total ${wOk?'ok':'err'}" id="weight-total">Total : ${wtotal}% ${wOk?'✓':'← ajuster pour atteindre 100%'}</div>
+  </div>`;
+
+  function makeList(sorted,dim,color){
+    return sorted.map((p,i)=>{
+      const val=dim==='global'?getGlobalScore(p.id):dim==='pri'?getPrio(p.id):getWR(p.id,dim);
+      const comps=state.scores[p.id]?(state.scores[p.id].envie_count||0):0;
+      const ratio=comps/(state.people.length-1||1);
+      const rCls=ratio>=0.5?'rel-high':ratio>=0.2?'rel-mid':'rel-low';
+      const rLbl=ratio>=0.5?'●●●':ratio>=0.2?'●●○':'●○○';
+      const icons=getPersonIcons(p.id);
+      return `<div class="rank-item">
+        <span class="rank-num">${i+1}</span>
+        <span class="rank-name">${p.name}<span class="rel-badge ${rCls}">${rLbl}</span></span>
+        <span class="rank-score" style="color:${color}">${(val*100).toFixed(0)}%</span>
+        ${icons?`<span class="rank-icons">${icons}</span>`:''}
+      </div>`;
+    }).join('');
+  }
+
+  const byE=[...state.people].sort((a,b)=>getWR(b.id,'envie')-getWR(a.id,'envie'));
+  const byP=[...state.people].sort((a,b)=>getWR(b.id,'prob')-getWR(a.id,'prob'));
+  const byPr=[...state.people].sort((a,b)=>getPrio(b.id)-getPrio(a.id));
+  const byG=[...state.people].sort((a,b)=>getGlobalScore(b.id)-getGlobalScore(a.id));
+
+  const activeExp=state.experiences.filter(e=>Object.values(state.personExperiences).some(arr=>arr.includes(e.id)));
+  const legendHtml=activeExp.length?`<div class="rank-legend"><div class="rank-legend-title">Légende expériences</div><div class="rank-legend-items">${activeExp.map(e=>`<span class="rank-legend-item">${e.emoji} ${e.label}</span>`).join('')}</div></div>`:'';
+
+  el.innerHTML=`
+    <div class="stats-bar">
+      <div><span class="stat-val">${n}</span><span class="stat-lab">Personnes</span></div>
+      <div><span class="stat-val">${done}</span><span class="stat-lab">Comp.</span></div>
+      <div><span class="stat-val">${total>0?Math.round(done/total*100):0}%</span><span class="stat-lab">Fait</span></div>
+    </div>
+    ${weightsHtml}
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;font-size:11px;color:#6b6b80;">
+      <span><span class="rel-badge rel-high">●●●</span> Fiable</span>
+      <span><span class="rel-badge rel-mid">●●○</span> Partiel</span>
+      <span><span class="rel-badge rel-low">●○○</span> Insuffisant</span>
+    </div>
+    <div class="rank-grid">
+      <div class="card"><div class="card-head"><span style="font-size:19px">🏆</span><div><div class="card-title" style="color:#c77dff">Score Global</div><div class="card-sub">Envie × Prob × Momentum × Logistique</div></div></div>${makeList(byG,'global','#c77dff')}</div>
+      <div class="card"><div class="card-head"><span style="font-size:19px">🔥</span><div><div class="card-title" style="color:#e8a838">Envie</div><div class="card-sub">Désirabilité relative</div></div></div>${makeList(byE,'envie','#e8a838')}</div>
+      <div class="card"><div class="card-head"><span style="font-size:19px">📡</span><div><div class="card-title" style="color:#4ea8de">Probabilité</div><div class="card-sub">Réalisme relatif</div></div></div>${makeList(byP,'prob','#4ea8de')}</div>
+      <div class="card"><div class="card-head"><span style="font-size:19px">⚡</span><div><div class="card-title" style="color:#56cf85">Priorité</div><div class="card-sub">Envie × Probabilité</div></div></div>${makeList(byPr,'pri','#56cf85')}</div>
+    </div>${legendHtml}`;
+}
+
+function updateWeight(dim,val){
+  state.weights[dim]=val;
+  saveData();
+  // Update display without full re-render
+  const el=document.getElementById('wv-'+dim);
+  if(el)el.textContent=val+'%';
+  const w=state.weights;
+  const t=w.envie+w.prob+w.momentum+w.logistique;
+  const tel=document.getElementById('weight-total');
+  if(tel){tel.textContent='Total : '+t+'% '+(Math.abs(t-100)<1?'✓':'← ajuster pour atteindre 100%');tel.className='weight-total '+(Math.abs(t-100)<1?'ok':'err');}
+}
+
+// ===== MATRIX =====
+function renderMatrix(){
+  const el=document.getElementById('matrix-content');
+  const colors=['#e8a838','#4ea8de','#56cf85','#ff6b6b','#c77dff','#ff9f43','#a29bfe','#fd79a8','#00cec9','#e17055'];
+
+  const dots=state.people.map((p,i)=>{
+    const x=getWR(p.id,'prob')*100;
+    const y=getWR(p.id,'envie')*100;
+    const color=colors[i%colors.length];
+    const initials=p.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    return {p,x,y,color,initials};
+  });
+
+  const dotsHtml=dots.map(d=>{
+    const left=d.x+'%';
+    const bottom=d.y+'%';
+    return `<div class="matrix-dot" style="left:${left};bottom:${bottom};background:${d.color}22;border-color:${d.color};color:${d.color}" title="${d.p.name} — Envie:${d.y.toFixed(0)}% / Prob:${d.x.toFixed(0)}%">${d.initials}</div>`;
+  }).join('');
+
+  // Quadrant analysis
+  const q1=dots.filter(d=>d.x>=50&&d.y>=50).sort((a,b)=>b.y+b.x-(a.y+a.x));
+  const q2=dots.filter(d=>d.x<50&&d.y>=50).sort((a,b)=>b.y-(a.y));
+  const q3=dots.filter(d=>d.x>=50&&d.y<50).sort((a,b)=>b.x-(a.x));
+  const q4=dots.filter(d=>d.x<50&&d.y<50);
+
+  function qList(arr,label,color){
+    if(!arr.length)return '';
+    return `<div class="card" style="margin-bottom:8px">
+      <div class="card-head"><div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0"></div><div><div class="card-title" style="color:${color}">${label}</div><div class="card-sub">${arr.length} personne${arr.length>1?'s':''}</div></div></div>
+      <div>${arr.slice(0,8).map(d=>`<div class="rank-item"><span class="rank-name">${d.p.name}</span><span class="rank-score" style="color:${color}">E${d.y.toFixed(0)}% P${d.x.toFixed(0)}%</span></div>`).join('')}</div>
+    </div>`;
+  }
+
+  // Recommendations
+  const top5=dots.sort((a,b)=>getGlobalScore(b.p.id)-getGlobalScore(a.p.id)).slice(0,5);
+  const toTest=dots.filter(d=>getWR(d.p.id,'prob')>0.4&&getWR(d.p.id,'envie')<0.5).sort((a,b)=>b.x-a.x).slice(0,3);
+  const toReval=dots.filter(d=>state.scores[d.p.id]&&state.scores[d.p.id].envie_count>10&&getGlobalScore(d.p.id)<0.25).slice(0,3);
+
+  el.innerHTML=`
+    <div class="section-title">Matrice Envie × Probabilité</div>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+      <span style="font-size:10px;color:#6b6b80;writing-mode:vertical-rl;transform:rotate(180deg);letter-spacing:1px;text-transform:uppercase">Envie →</span>
+      <div style="flex:1">
+        <div class="matrix-wrap">
+          <div class="matrix-quadrant mq-tl" style="color:#56cf8566">Haut intérêt<br>Haut potentiel</div>
+          <div class="matrix-quadrant mq-tr" style="color:#e8a83866">Haut intérêt<br>Bas potentiel</div>
+          <div class="matrix-quadrant mq-bl" style="color:#4ea8de66">Bas intérêt<br>Haut potentiel</div>
+          <div class="matrix-quadrant mq-br" style="color:#6b6b8066">Bas intérêt<br>Bas potentiel</div>
+          ${dotsHtml}
+        </div>
+        <div class="matrix-label-x" style="font-size:10px;color:#6b6b80;text-transform:uppercase;letter-spacing:1px">← Probabilité →</div>
+      </div>
+    </div>
+    <p style="font-size:11px;color:#6b6b80;margin-bottom:14px">Survole un point pour voir le nom. Les initiales identifient chaque personne.</p>
+
+    <div class="section-title">Analyse par quadrant</div>
+    ${qList(q1,'🏆 Priorité stratégique — Haut intérêt + Haut potentiel','#56cf85')}
+    ${qList(q2,'🔥 Haut intérêt, potentiel à développer','#e8a838')}
+    ${qList(q3,'📡 Fort potentiel, intérêt à cultiver','#4ea8de')}
+    ${qList(q4,'💤 Bas des deux axes — à réévaluer','#6b6b80')}
+
+    <div class="section-title" style="margin-top:14px">Recommandations</div>
+    <div class="reco-card">
+      <div class="reco-head">⚡ Top connexions à activer</div>
+      ${top5.map(d=>`<div class="reco-item"><span class="reco-name">${d.p.name}</span><span class="reco-reason">Score global ${(getGlobalScore(d.p.id)*100).toFixed(0)}%</span></div>`).join('')}
+    </div>
+    ${toTest.length?`<div class="reco-card"><div class="reco-head">🧪 Profils à tester rapidement</div>${toTest.map(d=>`<div class="reco-item"><span class="reco-name">${d.p.name}</span><span class="reco-reason">Fort potentiel, envie à confirmer</span></div>`).join('')}</div>`:''}
+    ${toReval.length?`<div class="reco-card"><div class="reco-head">🔄 Connexions à réévaluer</div>${toReval.map(d=>`<div class="reco-item"><span class="reco-name">${d.p.name}</span><span class="reco-reason">Score faible malgré nb comparaisons élevé</span></div>`).join('')}</div>`:''}`;
+}
+
+// ===== PROFILES =====
+let profileSearch='',profileOpenId=null;
+function renderProfiles(){
+  const el=document.getElementById('profiles-content');
+  const filtered=profileSearch?state.people.filter(p=>p.name.toLowerCase().includes(profileSearch.toLowerCase())):state.people;
+  el.innerHTML=`
+    <div class="section-title">Notes & Scores manuels</div>
+    <input class="profile-search" placeholder="Rechercher…" value="${profileSearch}" oninput="profileSearch=this.value;renderProfiles()">
+    <div>
+    ${filtered.map(p=>{
+      const pr=getProfile(p.id);
+      const gs=(getGlobalScore(p.id)*100).toFixed(0);
+      const isOpen=profileOpenId===p.id;
+      return `<div class="profile-card">
+        <div class="profile-head" onclick="profileOpenId=profileOpenId==='${p.id}'?null:'${p.id}';renderProfiles()">
+          <span class="profile-name">${p.name}</span>
+          <div class="profile-scores">
+            <span style="color:#c77dff">${gs}%</span>
+            <span style="color:#e8a838">${'⚡'.repeat(pr.momentum)||'—'}</span>
+          </div>
+        </div>
+        <div class="profile-body ${isOpen?'open':''}">
+          <div class="rating-row">
+            <div class="rating-label">⚡ Momentum actuel</div>
+            <div class="rating-desc">${pr.momentum?MOMENTUM_ANCHORS[pr.momentum]:MOMENTUM_ANCHORS[1]}</div>
+            <div class="rating-stars">
+              ${[1,2,3,4,5].map(v=>`<button class="star-btn ${pr.momentum>=v?'active':''}" onclick="setRating('${p.id}','momentum',${v})">${v}</button>`).join('')}
+            </div>
+          </div>
+          <div class="rating-row" style="margin-bottom:14px">
+            <div class="rating-label">🗺️ Facilité logistique</div>
+            <div class="rating-desc">${pr.logistique?LOGISTIQUE_ANCHORS[pr.logistique]:LOGISTIQUE_ANCHORS[1]}</div>
+            <div class="rating-stars">
+              ${[1,2,3,4,5].map(v=>`<button class="star-btn ${pr.logistique>=v?'active':''}" onclick="setRating('${p.id}','logistique',${v})">${v}</button>`).join('')}
+            </div>
+          </div>
+          <div class="next-step-label">📌 Prochain step</div>
+          <textarea class="next-step-input" placeholder="Ex: Proposer un café ce mois-ci, envoyer l'article…" oninput="setNextStep('${p.id}',this.value)">${pr.nextStep||''}</textarea>
+          <div style="font-size:11px;color:#6b6b80;margin-top:8px">
+            Envie : ${(getWR(p.id,'envie')*100).toFixed(0)}% · 
+            Prob : ${(getWR(p.id,'prob')*100).toFixed(0)}% · 
+            Momentum : ${pr.momentum}/5 · 
+            Logistique : ${pr.logistique}/5 · 
+            <span style="color:#c77dff">Score global : ${gs}%</span>
+          </div>
+        </div>
+      </div>`;
+    }).join('')}
+    </div>`;
+}
+
+function setRating(pid,dim,val){
+  if(!state.profiles[pid])state.profiles[pid]={momentum:0,logistique:0,nextStep:''};
+  state.profiles[pid][dim]=val;
+  saveData();renderProfiles();
+}
+function setNextStep(pid,val){
+  if(!state.profiles[pid])state.profiles[pid]={momentum:0,logistique:0,nextStep:''};
+  state.profiles[pid].nextStep=val;
+  saveData();
+}
+
+// ===== EXPERIENCES =====
+let expSearch='',expOpenId=null;
+function renderExperiences(){
+  const el=document.getElementById('exp-content');
+  const glossHtml=`
+    <div class="section-title">Glossaire des expériences</div>
+    <div class="glossaire-card">
+      <div class="glossaire-head">Modifie emoji et libellé — sauvegarde automatique</div>
+      ${state.experiences.map(e=>`<div class="glossaire-item">
+        <input class="glos-emoji-input" value="${e.emoji}" oninput="updateExp('${e.id}','emoji',this.value)" maxlength="2">
+        <input class="glos-label-input" value="${e.label}" oninput="updateExp('${e.id}','label',this.value)">
+        <button class="glos-del" onclick="deleteExp('${e.id}')">×</button>
+      </div>`).join('')}
+    </div>
+    <button class="btn-add-exp" onclick="addExp()">+ Ajouter une expérience</button>`;
+
+  const filtered=expSearch?state.people.filter(p=>p.name.toLowerCase().includes(expSearch.toLowerCase())):state.people;
+  const personsHtml=`
+    <div class="section-title">Expériences par personne</div>
+    <input class="exp-search" placeholder="Rechercher une personne…" value="${expSearch}" oninput="expSearch=this.value;renderExperiences()">
+    <div>
+      ${filtered.map(p=>{
+        const checked=state.personExperiences[p.id]||[];
+        const icons=getPersonIcons(p.id);
+        const isOpen=expOpenId===p.id;
+        return `<div class="person-exp-card">
+          <div class="person-exp-head" onclick="expOpenId=expOpenId==='${p.id}'?null:'${p.id}';renderExperiences()">
+            <span class="person-exp-name">${p.name}</span>
+            <span class="person-exp-icons">${icons||'<span style="color:#3a3a45;font-size:12px">aucune</span>'}</span>
+          </div>
+          <div class="person-exp-body ${isOpen?'open':''}">
+            <div class="exp-grid">
+              ${state.experiences.map(e=>`<div class="exp-check ${checked.includes(e.id)?'checked':''}" onclick="toggleExp('${p.id}','${e.id}')">
+                <span class="exp-check-emoji">${e.emoji}</span>
+                <span class="exp-check-label">${e.label}</span>
+              </div>`).join('')}
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  el.innerHTML=glossHtml+'<div style="height:14px"></div>'+personsHtml;
+}
+function toggleExp(pid,eid){
+  if(!state.personExperiences[pid])state.personExperiences[pid]=[];
+  const arr=state.personExperiences[pid],idx=arr.indexOf(eid);
+  if(idx===-1)arr.push(eid);else arr.splice(idx,1);
+  saveData();renderExperiences();
+}
+function updateExp(eid,field,value){const e=state.experiences.find(x=>x.id===eid);if(e){e[field]=value;saveData();}}
+function deleteExp(eid){
+  if(!confirm('Supprimer cette expérience ?'))return;
+  state.experiences=state.experiences.filter(e=>e.id!==eid);
+  for(const pid of Object.keys(state.personExperiences))state.personExperiences[pid]=state.personExperiences[pid].filter(id=>id!==eid);
+  saveData();renderExperiences();
+}
+function addExp(){state.experiences.push({id:makeExpId(),emoji:'⭐',label:'Nouvelle expérience'});saveData();renderExperiences();}
+
+// ===== HISTORY =====
+let histFilter='';
+function renderHistory(){
+  const el=document.getElementById('history-content');
+  const entries=Object.entries(state.comparisons).map(([key,val])=>{
+    const [id1,id2]=key.split('|');
+    return {id1,id2,key,...val};
+  }).sort((a,b)=>(b.ts||0)-(a.ts||0));
+
+  const filtered=histFilter
+    ?entries.filter(e=>getName(e.id1).toLowerCase().includes(histFilter.toLowerCase())||getName(e.id2).toLowerCase().includes(histFilter.toLowerCase()))
+    :entries;
+
+  function winLabel(winner,id1,id2){
+    if(winner==='tie')return '= Égalité';
+    if(winner===id1)return getName(id1);
+    if(winner===id2)return getName(id2);
+    return winner;
+  }
+
+  el.innerHTML=`
+    <div class="section-title">Historique des comparaisons</div>
+    <input class="history-filter" placeholder="Filtrer par prénom…" value="${histFilter}" oninput="histFilter=this.value;renderHistory()">
+    <div class="card">
+      <div style="padding:9px 14px;border-bottom:1px solid #2a2a35;font-size:10px;color:#6b6b80;display:flex;justify-content:space-between;text-transform:uppercase;letter-spacing:1px;">
+        <span>${filtered.length} comparaisons</span>
+        <span>Refaire = remet en session</span>
+      </div>
+      ${filtered.length===0?'<div style="padding:20px;text-align:center;color:#6b6b80">Aucune comparaison trouvée.</div>':
+        filtered.map(e=>`<div class="history-item">
+          <div class="history-vs">
+            <div style="font-size:13px">${getName(e.id1)} <span style="color:#6b6b80">vs</span> ${getName(e.id2)}</div>
+            <div style="font-size:11px;color:#6b6b80;margin-top:2px">Envie : <span style="color:#e8a838">${winLabel(e.envie,e.id1,e.id2)}</span> · Prob : <span style="color:#4ea8de">${winLabel(e.prob,e.id1,e.id2)}</span></div>
+          </div>
+          <button class="history-redo" onclick="redoPair('${e.id1}','${e.id2}','${e.key}')">Refaire</button>
+        </div>`).join('')}
+    </div>`;
+}
+
+function redoPair(id1,id2,key){
+  // Remove existing comparison and add to session
+  delete state.comparisons[key];
+  // Remove from scores (approximate: decrement)
+  const val=state.comparisons[key];
+  saveData();
+  sessionPairs=[[ id1,id2],...sessionPairs.slice(sessionIdx)];
+  sessionIdx=0;
+  currentEnvie=null;
+  switchTab('compare',document.querySelectorAll('.tab')[0]);
+  showFlash('Comparaison remise en session');
+}
+
+// ===== MANAGE =====
+let editingId=null;
+function renderManage(){
+  const el=document.getElementById('person-list');
+  if(!state.people.length){el.innerHTML='<div style="padding:18px;color:#6b6b80;text-align:center">Aucune personne.</div>';return;}
+  // Sort alphabetically
+  const sorted=[...state.people].sort((a,b)=>a.name.localeCompare(b.name,'fr'));
+  el.innerHTML=`<div class="person-list-head"><span>${state.people.length} personnes (ordre alpha)</span><span>comp.</span></div>`;
+  sorted.forEach(p=>{
+    const comps=state.scores[p.id]?(state.scores[p.id].envie_count||0):0;
+    const row=document.createElement('div');
+    row.className='person-row'+(editingId===p.id?' editing':'');
+    if(editingId===p.id){
+      const inp=document.createElement('input');inp.className='edit-input';inp.value=p.name;
+      inp.addEventListener('keydown',e=>{if(e.key==='Enter')saveName(p.id,inp.value);if(e.key==='Escape'){editingId=null;renderManage();}});
+      const btnS=document.createElement('button');btnS.className='btn-save';btnS.textContent='✓';btnS.onclick=()=>saveName(p.id,inp.value);
+      const btnC=document.createElement('button');btnC.className='btn-cancel-sm';btnC.textContent='✕';btnC.onclick=()=>{editingId=null;renderManage();};
+      row.appendChild(inp);row.appendChild(btnS);row.appendChild(btnC);
+      el.appendChild(row);setTimeout(()=>inp.focus(),50);
+    }else{
+      const nEl=document.createElement('span');nEl.className='person-name';nEl.textContent=p.name;
+      const cEl=document.createElement('span');cEl.className='person-comps';cEl.textContent=comps+' comp.';
+      const bE=document.createElement('button');bE.className='icon-btn';bE.textContent='✎';bE.style.color='#4ea8de';bE.onclick=()=>{editingId=p.id;renderManage();};
+      const bD=document.createElement('button');bD.className='icon-btn';bD.textContent='×';bD.style.color='#ff6b6b';bD.onclick=()=>deletePerson(p.id);
+      row.appendChild(nEl);row.appendChild(cEl);row.appendChild(bE);row.appendChild(bD);
+      el.appendChild(row);
+    }
+  });
+}
+
+function addPerson(){
+  const inp=document.getElementById('new-name'),name=inp.value.trim();
+  if(!name)return;
+  if(state.people.some(p=>p.name.toLowerCase()===name.toLowerCase())){showFlash('Déjà dans la liste');return;}
+  state.people.push({id:makeId(),name});saveData();inp.value='';initSession();renderManage();showFlash('Ajouté : '+name);
+}
+function saveName(id,newName){
+  newName=newName.trim();if(!newName)return;
+  if(state.people.some(p=>p.id!==id&&p.name.toLowerCase()===newName.toLowerCase())){showFlash('Ce nom existe déjà');return;}
+  const p=state.people.find(p=>p.id===id);if(p)p.name=newName;
+  saveData();editingId=null;renderManage();showFlash('Nom modifié');
+}
+function deletePerson(id){
+  if(!confirm('Supprimer cette personne ?'))return;
+  state.people=state.people.filter(p=>p.id!==id);
+  delete state.scores[id];delete state.personExperiences[id];delete state.profiles[id];
+  for(const key of Object.keys(state.comparisons)){const pts=key.split('|');if(pts[0]===id||pts[1]===id)delete state.comparisons[key];}
+  saveData();editingId=null;initSession();renderManage();showFlash('Supprimé');
+}
+function resetScores(){
+  if(!confirm('Réinitialiser tous les scores ?'))return;
+  state.scores={};state.comparisons={};saveData();initSession();renderManage();showFlash('Scores réinitialisés');
+}
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='relations-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);showFlash('Exporté');
+}
+function importJSON(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const p=JSON.parse(e.target.result);
+      if(!p.people||!Array.isArray(p.people))throw new Error('Format invalide');
+      if(!confirm('Remplacer les données actuelles ?'))return;
+      if(!p.experiences)p.experiences=DEFAULT_EXP;
+      if(!p.personExperiences)p.personExperiences={};
+      if(!p.profiles)p.profiles={};
+      if(!p.weights)p.weights={envie:40,prob:30,momentum:20,logistique:10};
+      state=p;saveData();initSession();renderManage();showFlash('Importé — '+state.people.length+' personnes');
+    }catch(err){alert('Fichier invalide : '+err.message);}
+  };
+  reader.readAsText(file);event.target.value='';
+}
+
+// ===== INIT =====
+initSession();
+renderCompare();
+renderManage();
+</script>
+</body>
+</html>
