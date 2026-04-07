@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relations</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0e0e10; color: #e8e8f0; font-family: 'Courier New', monospace; font-size: 14px; min-height: 100vh; }
+header { padding: 14px 16px; border-bottom: 1px solid #2a2a35; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; position: sticky; top: 0; background: #0e0e10; z-index: 100; }
+.brand { font-family: Georgia, serif; font-size: 20px; }
+.brand span { color: #c77dff; }
+.tabs { display: flex; gap: 3px; flex-wrap: wrap; }
+.tab { padding: 7px 10px; border: 1px solid #2a2a35; background: transparent; color: #a0a0b8; font-family: 'Courier New', monospace; font-size: 10px; cursor: pointer; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+.tab.active { background: #c77dff; border-color: #c77dff; color: #fff; }
+main { padding: 16px; max-width: 600px; margin: 0 auto; }
+.view { display: none; }
+.view.active { display: block; }
+.prog-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.prog-label { color: #6b6b80; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+.prog-bar { background: #2a2a35; height: 3px; border-radius: 2px; margin-bottom: 20px; overflow: hidden; }
+.prog-fill { height: 100%; background: linear-gradient(90deg, #e8a838, #c77dff); transition: width 0.4s; }
+.steps { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; }
+.step-dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid #2a2a35; background: transparent; }
+.step-dot.active { background: #e8a838; border-color: #e8a838; }
+.step-dot.done { background: #4ea8de; border-color: #4ea8de; }
+.dim-title { text-align: center; margin-bottom: 20px; }
+.dim-title h2 { font-family: Georgia, serif; font-size: 32px; font-weight: 400; }
+.dim-title p { color: #6b6b80; font-size: 12px; margin-top: 6px; }
+.duel { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+.choice-btn { background: #16161a; border: 1px solid #2a2a35; border-radius: 12px; padding: 22px 16px; cursor: pointer; color: #e8e8f0; font-family: 'Courier New', monospace; font-size: 18px; text-align: center; width: 100%; transition: all 0.15s; }
+.choice-btn:active { border-color: #e8a838; background: #1e1e24; }
+.choice-btn.prob:active { border-color: #4ea8de; }
+.vs-sep { text-align: center; color: #3a3a45; font-size: 11px; letter-spacing: 2px; }
+.tie-btn { display: block; width: 100%; margin-bottom: 14px; background: transparent; border: 1px dashed #2a2a35; color: #6b6b80; padding: 12px 16px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 14px; cursor: pointer; }
+.tie-btn:active { border-color: #a0a0b8; color: #e8e8f0; }
+.sel-box { background: #1e1e24; border: 1px solid #2a2a35; border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; display: flex; gap: 16px; flex-wrap: wrap; }
+.sel-item { display: flex; gap: 6px; align-items: center; }
+.sel-label { color: #6b6b80; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+.sel-val-e { color: #e8a838; font-size: 14px; }
+.sel-val-empty { color: #3a3a45; font-size: 14px; }
+.action-row { display: flex; justify-content: center; }
+.btn-ghost { padding: 12px 28px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 13px; cursor: pointer; border: 1px solid #2a2a35; background: transparent; color: #6b6b80; }
+.done-panel { background: #16161a; border: 1px solid #2a2a35; border-radius: 10px; padding: 36px 16px; text-align: center; }
+.done-panel h2 { font-family: Georgia, serif; font-size: 22px; font-weight: 400; margin-bottom: 10px; }
+.done-panel p { color: #6b6b80; font-size: 12px; margin-bottom: 20px; }
+.btn-primary { padding: 12px 24px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 13px; cursor: pointer; border: 1px solid #c77dff; background: #c77dff; color: #fff; }
+.stats-bar { display: flex; gap: 16px; flex-wrap: wrap; padding: 12px 16px; background: #16161a; border: 1px solid #2a2a35; border-radius: 8px; margin-bottom: 14px; }
+.stat-val { font-family: Georgia, serif; font-size: 20px; display: block; }
+.stat-lab { font-size: 10px; color: #6b6b80; text-transform: uppercase; letter-spacing: 1px; }
+.rank-grid { display: flex; flex-direction: column; gap: 16px; }
+.rank-card { background: #16161a; border: 1px solid #2a2a35; border-radius: 10px; overflow: hidden; }
+.rank-card-head { padding: 12px 14px; border-bottom: 1px solid #2a2a35; display: flex; align-items: center; gap: 8px; }
+.rank-card-title { font-family: Georgia, serif; font-size: 15px; font-weight: 400; }
+.rank-card-sub { font-size: 10px; color: #6b6b80; margin-top: 1px; }
+.rank-item { display: flex; align-items: center; gap: 8px; padding: 9px 14px; border-bottom: 1px solid #1a1a20; }
+.rank-item:last-child { border-bottom: none; }
+.rank-num { font-size: 11px; color: #6b6b80; width: 20px; text-align: right; flex-shrink: 0; }
+.rank-name { flex: 1; font-size: 13px; }
+.rank-icons { font-size: 13px; flex-shrink: 0; }
+.rank-score { font-size: 12px; flex-shrink: 0; }
+.rel-badge { font-size: 9px; padding: 1px 4px; border-radius: 3px; margin-left: 3px; vertical-align: middle; }
+.rel-high { background: rgba(86,207,133,0.15); color: #56cf85; }
+.rel-mid  { background: rgba(232,168,56,0.15); color: #e8a838; }
+.rel-low  { background: rgba(255,107,107,0.15); color: #ff6b6b; }
+.rank-legend { margin-top: 12px; background: #16161a; border: 1px solid #2a2a35; border-radius: 8px; padding: 12px 14px; }
+.rank-legend-title { font-size: 10px; color: #6b6b80; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.rank-legend-items { display: flex; flex-wrap: wrap; gap: 8px; }
+.rank-legend-item { font-size: 12px; color: #a0a0b8; }
+.section-title { font-family: Georgia, serif; font-size: 17px; font-weight: 400; margin-bottom: 12px; }
+.exp-search { width: 100%; background: #1e1e24; border: 1px solid #2a2a35; border-radius: 8px; padding: 12px 14px; color: #e8e8f0; font-family: 'Courier New', monospace; font-size: 14px; outline: none; margin-bottom: 12px; }
+.exp-search:focus { border-color: #c77dff; }
+.person-exp-list { display: flex; flex-direction: column; gap: 8px; }
+.person-exp-card { background: #16161a; border: 1px solid #2a2a35; border-radius: 10px; overflow: hidden; }
+.person-exp-head { padding: 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+.person-exp-name { font-size: 15px; }
+.person-exp-icons { font-size: 16px; }
+.person-exp-body { border-top: 1px solid #2a2a35; padding: 12px 14px; display: none; }
+.person-exp-body.open { display: block; }
+.exp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.exp-check { display: flex; align-items: center; gap: 8px; padding: 10px; border-radius: 8px; cursor: pointer; border: 1px solid #2a2a35; background: transparent; transition: all 0.15s; }
+.exp-check.checked { border-color: #c77dff; background: rgba(199,125,255,0.1); }
+.exp-check-emoji { font-size: 18px; }
+.exp-check-label { font-size: 12px; color: #6b6b80; flex: 1; }
+.exp-check.checked .exp-check-label { color: #e8e8f0; }
+.glossaire-card { background: #16161a; border: 1px solid #2a2a35; border-radius: 10px; overflow: hidden; margin-bottom: 12px; }
+.glossaire-head { padding: 10px 14px; border-bottom: 1px solid #2a2a35; font-size: 10px; color: #6b6b80; text-transform: uppercase; letter-spacing: 1px; }
+.glossaire-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #1a1a20; }
+.glossaire-item:last-child { border-bottom: none; }
+.glos-emoji-input { background: #1e1e24; border: 1px solid #2a2a35; border-radius: 6px; padding: 6px 8px; color: #e8e8f0; font-size: 18px; width: 52px; text-align: center; outline: none; font-family: inherit; }
+.glos-label-input { flex: 1; background: #1e1e24; border: 1px solid #2a2a35; border-radius: 6px; padding: 8px 10px; color: #e8e8f0; font-family: 'Courier New', monospace; font-size: 13px; outline: none; }
+.glos-emoji-input:focus, .glos-label-input:focus { border-color: #c77dff; }
+.glos-del { background: transparent; border: none; color: #6b6b80; cursor: pointer; font-size: 18px; padding: 4px 6px; }
+.btn-add-exp { width: 100%; padding: 12px; background: transparent; border: 1px dashed #2a2a35; color: #6b6b80; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 13px; cursor: pointer; margin-bottom: 16px; }
+.add-form { background: #16161a; border: 1px solid #2a2a35; border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+.add-form h2 { font-family: Georgia, serif; font-size: 17px; font-weight: 400; margin-bottom: 4px; }
+.add-form p { color: #6b6b80; font-size: 11px; margin-bottom: 14px; }
+.field label { display: block; font-size: 10px; color: #6b6b80; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.field input { width: 100%; background: #1e1e24; border: 1px solid #2a2a35; border-radius: 8px; padding: 12px 14px; color: #e8e8f0; font-family: 'Courier New', monospace; font-size: 15px; outline: none; margin-bottom: 12px; }
+.field input:focus { border-color: #c77dff; }
+.person-list { background: #16161a; border: 1px solid #2a2a35; border-radius: 10px; overflow: hidden; margin-bottom: 14px; }
+.person-list-head { padding: 10px 14px; border-bottom: 1px solid #2a2a35; font-size: 10px; color: #6b6b80; text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; }
+.person-row { display: flex; align-items: center; gap: 8px; padding: 11px 14px; border-bottom: 1px solid #1a1a20; }
+.person-row:last-child { border-bottom: none; }
+.person-row.editing { background: #1e1e24; }
+.person-name { flex: 1; font-size: 14px; }
+.person-comps { font-size: 10px; color: #6b6b80; }
+.icon-btn { background: transparent; border: none; cursor: pointer; font-size: 16px; padding: 4px 6px; border-radius: 3px; }
+.edit-input { flex: 1; background: #0e0e10; border: 1px solid #4ea8de; border-radius: 6px; padding: 8px 12px; color: #e8e8f0; font-family: 'Courier New', monospace; font-size: 14px; outline: none; }
+.btn-save { background: #4ea8de; border: none; color: #fff; padding: 8px 14px; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 12px; cursor: pointer; }
+.btn-cancel-sm { background: transparent; border: 1px solid #2a2a35; color: #6b6b80; padding: 8px 10px; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 12px; cursor: pointer; }
+.reset-zone { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; background: #16161a; border: 1px solid #2a2a35; border-radius: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.reset-zone p { color: #6b6b80; font-size: 11px; flex: 1; }
+.btn-danger { background: transparent; border: 1px solid rgba(255,107,107,0.4); color: #ff6b6b; padding: 8px 14px; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 11px; cursor: pointer; }
+.backup-zone { background: #16161a; border: 1px solid #2a2a35; border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
+.backup-head { padding: 10px 14px; border-bottom: 1px solid #2a2a35; font-size: 10px; color: #6b6b80; text-transform: uppercase; letter-spacing: 1px; }
+.backup-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.backup-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.backup-row p { color: #6b6b80; font-size: 11px; flex: 1; }
+.btn-export { background: transparent; border: 1px solid #4ea8de; color: #4ea8de; padding: 8px 14px; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 11px; cursor: pointer; white-space: nowrap; }
+.btn-import-label { background: transparent; border: 1px solid #e8a838; color: #e8a838; padding: 8px 14px; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 11px; cursor: pointer; white-space: nowrap; display: inline-block; }
+#import-file { display: none; }
+.flash { position: fixed; bottom: 20px; right: 20px; background: #56cf85; color: #0e0e10; padding: 10px 16px; border-radius: 6px; font-size: 12px; display: none; z-index: 999; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Relations<span>.</span></div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('compare',this)">Comparer</button>
+    <button class="tab" onclick="switchTab('rankings',this)">Classements</button>
+    <button class="tab" onclick="switchTab('experiences',this)">Vécu</button>
+    <button class="tab" onclick="switchTab('manage',this)">Gérer</button>
+  </div>
+</header>
+<main>
+  <div id="view-compare" class="view active"><div id="compare-content"></div></div>
+  <div id="view-rankings" class="view"><div id="rankings-content"></div></div>
+  <div id="view-experiences" class="view"><div id="exp-content"></div></div>
+  <div id="view-manage" class="view">
+    <div class="add-form">
+      <h2>Ajouter une personne</h2>
+      <p>Elle sera intégrée dans les prochaines comparaisons.</p>
+      <div class="field">
+        <label>Prénom / Nom</label>
+        <input type="text" id="new-name" placeholder="ex. Sophie M." onkeydown="if(event.key==='Enter')addPerson()">
+      </div>
+      <button class="btn-primary" onclick="addPerson()">Ajouter</button>
+    </div>
+    <div class="person-list" id="person-list"></div>
+    <div class="reset-zone">
+      <p>Réinitialiser tous les scores (les noms sont conservés).</p>
+      <button class="btn-danger" onclick="resetScores()">Réinitialiser</button>
+    </div>
+    <div class="backup-zone">
+      <div class="backup-head">Sauvegarde JSON</div>
+      <div class="backup-body">
+        <div class="backup-row">
+          <p>Exporte toutes tes données dans un fichier JSON.</p>
+          <button class="btn-export" onclick="exportJSON()">↓ Exporter</button>
+        </div>
+        <div class="backup-row">
+          <p>Restaure une sauvegarde.</p>
+          <label class="btn-import-label" for="import-file">↑ Importer</label>
+          <input type="file" id="import-file" accept=".json" onchange="importJSON(event)">
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+<div class="flash" id="flash"></div>
+<script>
+const DEFAULT_PEOPLE = [
+  "Sophie L.","Sylvie","Mariam","Léa","Céline J.","Peggy M.",
+  "Martine B.","Magali B.","Servane","Nathalie","Mélanie A.","Vanessa",
+  "Florence G.","Élise","Euratechnologies","Manon","Bernadette","Maelle",
+  "Manon G.","Loan","Renée","Catherine J.","Martine J.","Eva R.",
+  "Souaad","Marine","Aline C.","Coralie L.","Agathe G.","Nadine P.",
+  "Mathilde E.","Jenny","Julie V.","Charleen","Sarah","Émilie M.",
+  "Coralie J.","Livia","Titia","LN","Lisa","Nadège","Mélanie G.","Sophie D.",
+  "Sandrine D.","Elodie B.","Marie D.","Aline","Sophie C.",
+  "Camille R.","Sabrina L.","Aurore X.","Muriel","Justine"
+];
+const DEFAULT_EXPERIENCES = [
+  {id:'e1',emoji:'☕',label:'Café / thé'},
+  {id:'e2',emoji:'🍽️',label:'Repas'},
+  {id:'e3',emoji:'🥂',label:'Soirée / verre'},
+  {id:'e4',emoji:'🏃',label:'Sport ensemble'},
+  {id:'e5',emoji:'🎵',label:'Musique / concert'},
+  {id:'e6',emoji:'✈️',label:'Voyage'},
+  {id:'e7',emoji:'💼',label:'Travail / projet pro'},
+  {id:'e8',emoji:'🎓',label:'Formation ensemble'},
+  {id:'e9',emoji:'🎉',label:'Événement / fête'},
+  {id:'e10',emoji:'🤝',label:'Networking'},
+  {id:'e11',emoji:'📞',label:'Appel / visio régulier'},
+  {id:'e12',emoji:'🏠',label:'Reçue chez moi ou elle'},
+];
+let _idc = Date.now();
+function makeId() { return 'p'+(++_idc); }
+function makeExpId() { return 'e'+(++_idc); }
+function defaultState() {
+  return { people: DEFAULT_PEOPLE.map(name=>({id:makeId(),name})), scores:{}, comparisons:{}, experiences:DEFAULT_EXPERIENCES, personExperiences:{} };
+}
+const KEY = 'relations_v4';
+function saveData() { try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){} }
+function loadData() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      const p = JSON.parse(raw);
+      if (p.people && p.people.length > 0) {
+        if (p.people.some(x=>!x.id||!x.id.startsWith('p'))) return {...defaultState(), people:p.people.map(x=>({id:makeId(),name:x.name}))};
+        if (!p.experiences) p.experiences = DEFAULT_EXPERIENCES;
+        if (!p.personExperiences) p.personExperiences = {};
+        return p;
+      }
+    }
+  } catch(e) {}
+  return defaultState();
+}
+let state = loadData();
+function getName(id) { const p=state.people.find(p=>p.id===id); return p?p.name:id; }
+function getWinRate(id,dim) { const s=state.scores[id]; if(!s)return 0; const c=s[dim+'_count']||0; return c===0?0:(s[dim]||0)/c; }
+function getPriority(id) { return getWinRate(id,'envie')*getWinRate(id,'prob'); }
+function getTotalPairs() { const n=state.people.length; return n*(n-1)/2; }
+function getDonePairs() { return Object.keys(state.comparisons).length; }
+function getPendingPairs() {
+  const ids=state.people.map(p=>p.id), pairs=[];
+  for(let i=0;i<ids.length;i++) for(let j=i+1;j<ids.length;j++) {
+    if(!state.comparisons[ids[i]+'|'+ids[j]]&&!state.comparisons[ids[j]+'|'+ids[i]]) pairs.push([ids[i],ids[j]]);
+  }
+  for(let i=pairs.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pairs[i],pairs[j]]=[pairs[j],pairs[i]];}
+  return pairs;
+}
+function ensureScore(id){if(!state.scores[id])state.scores[id]={envie:0,prob:0,envie_count:0,prob_count:0};}
+function recordComparison(id1,id2,eW,pW){
+  state.comparisons[id1+'|'+id2]={envie:eW,prob:pW};
+  ensureScore(id1);ensureScore(id2);
+  if(eW===id1)state.scores[id1].envie+=1;else if(eW===id2)state.scores[id2].envie+=1;else{state.scores[id1].envie+=0.5;state.scores[id2].envie+=0.5;}
+  state.scores[id1].envie_count++;state.scores[id2].envie_count++;
+  if(pW===id1)state.scores[id1].prob+=1;else if(pW===id2)state.scores[id2].prob+=1;else{state.scores[id1].prob+=0.5;state.scores[id2].prob+=0.5;}
+  state.scores[id1].prob_count++;state.scores[id2].prob_count++;
+  saveData();
+}
+function getPersonIcons(pid){
+  const ids=state.personExperiences[pid]||[];
+  return ids.map(eid=>{const e=state.experiences.find(x=>x.id===eid);return e?e.emoji:'';}).join('');
+}
+function showFlash(msg){const el=document.getElementById('flash');el.textContent=msg;el.style.display='block';setTimeout(()=>el.style.display='none',2000);}
+
+function switchTab(view,btn){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  btn.classList.add('active');
+  if(view==='compare')renderCompare();
+  if(view==='rankings')renderRankings();
+  if(view==='experiences')renderExperiences();
+  if(view==='manage')renderManage();
+}
+
+let sessionPairs=[],sessionIdx=0,currentEnvie=null;
+function initSession(){sessionPairs=getPendingPairs().slice(0,10);sessionIdx=0;currentEnvie=null;}
+function renderCompare(){
+  const el=document.getElementById('compare-content');
+  const total=getTotalPairs(),done=getDonePairs(),pct=total>0?Math.round(done/total*100):100;
+  if(!sessionPairs.length||sessionIdx>=sessionPairs.length)initSession();
+  const pair=sessionPairs[sessionIdx];
+  if(!pair){
+    el.innerHTML=`<div class="done-panel"><h2>Toutes les comparaisons faites ✓</h2><p>${done} paires sur ${total}.</p><button class="btn-primary" onclick="switchTab('rankings',document.querySelectorAll('.tab')[1])">Voir les classements</button></div>`;
+    return;
+  }
+  const [id1,id2]=pair,step=currentEnvie?'prob':'envie';
+  el.innerHTML=`
+    <div class="prog-row"><span class="prog-label">Comparaison ${sessionIdx+1}/${sessionPairs.length}</span><span class="prog-label">${done}/${total} (${pct}%)</span></div>
+    <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+    <div class="steps"><div class="step-dot ${!currentEnvie?'active':'done'}"></div><div class="step-dot ${currentEnvie?'active':''}"></div></div>
+    <div class="dim-title">
+      ${!currentEnvie?`<h2 style="color:#e8a838">Envie</h2><p>Avec qui as-tu le plus envie d'interagir ?</p>`:`<h2 style="color:#4ea8de">Probabilité</h2><p>Avec qui est-ce le plus réaliste ?</p>`}
+    </div>
+    <div class="duel">
+      <button class="choice-btn ${step}" onclick="choose('${id1}')">${getName(id1)}</button>
+      <div class="vs-sep">— vs —</div>
+      <button class="choice-btn ${step}" onclick="choose('${id2}')">${getName(id2)}</button>
+    </div>
+    <button class="tie-btn" onclick="chooseTie()">Égalité</button>
+    ${currentEnvie?`<div class="sel-box"><div class="sel-item"><span class="sel-label">Envie :</span><span class="sel-val-e">${currentEnvie==='tie'?'= Égalité':getName(currentEnvie)} ✓</span></div><div class="sel-item"><span class="sel-label">Probabilité :</span><span class="sel-val-empty">— à choisir</span></div></div>`:''}
+    <div class="action-row"><button class="btn-ghost" onclick="skipPair()">Passer</button></div>`;
+}
+function choose(id){if(!currentEnvie){currentEnvie=id;renderCompare();}else{validate(currentEnvie,id);}}
+function chooseTie(){if(!currentEnvie){currentEnvie='tie';renderCompare();}else{validate(currentEnvie,'tie');}}
+function validate(eW,pW){
+  const pair=sessionPairs[sessionIdx];recordComparison(pair[0],pair[1],eW,pW);
+  currentEnvie=null;sessionIdx++;
+  if(sessionIdx>=sessionPairs.length){sessionPairs=getPendingPairs().slice(0,10);sessionIdx=0;}
+  renderCompare();
+}
+function skipPair(){
+  currentEnvie=null;sessionIdx++;
+  if(sessionIdx>=sessionPairs.length){sessionPairs=getPendingPairs().slice(0,10);sessionIdx=0;}
+  renderCompare();
+}
+
+function renderRankings(){
+  const el=document.getElementById('rankings-content');
+  const total=getTotalPairs(),done=getDonePairs(),n=state.people.length;
+  const byE=[...state.people].sort((a,b)=>getWinRate(b.id,'envie')-getWinRate(a.id,'envie'));
+  const byP=[...state.people].sort((a,b)=>getWinRate(b.id,'prob')-getWinRate(a.id,'prob'));
+  const byPr=[...state.people].sort((a,b)=>getPriority(b.id)-getPriority(a.id));
+  function makeList(sorted,dim,color){
+    return sorted.map((p,i)=>{
+      const val=dim==='pri'?getPriority(p.id):getWinRate(p.id,dim);
+      const comps=state.scores[p.id]?(state.scores[p.id].envie_count||0):0;
+      const ratio=comps/(state.people.length-1);
+      const rCls=ratio>=0.5?'rel-high':ratio>=0.2?'rel-mid':'rel-low';
+      const rLbl=ratio>=0.5?'●●●':ratio>=0.2?'●●○':'●○○';
+      const icons=getPersonIcons(p.id);
+      return `<div class="rank-item">
+        <span class="rank-num">${i+1}</span>
+        <span class="rank-name">${p.name}<span class="rel-badge ${rCls}">${rLbl}</span></span>
+        <span class="rank-icons">${icons}</span>
+        <span class="rank-score" style="color:${color}">${(val*100).toFixed(0)}%</span>
+      </div>`;
+    }).join('');
+  }
+  const activeExp=state.experiences.filter(e=>Object.values(state.personExperiences).some(arr=>arr.includes(e.id)));
+  const legendHtml=activeExp.length?`<div class="rank-legend"><div class="rank-legend-title">Légende expériences</div><div class="rank-legend-items">${activeExp.map(e=>`<span class="rank-legend-item">${e.emoji} ${e.label}</span>`).join('')}</div></div>`:'';
+  el.innerHTML=`
+    <div class="stats-bar">
+      <div><span class="stat-val">${n}</span><span class="stat-lab">Personnes</span></div>
+      <div><span class="stat-val">${done}</span><span class="stat-lab">Comp.</span></div>
+      <div><span class="stat-val">${total-done}</span><span class="stat-lab">Restantes</span></div>
+      <div><span class="stat-val">${total>0?Math.round(done/total*100):0}%</span><span class="stat-lab">Fait</span></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;font-size:11px;color:#6b6b80;">
+      <span><span class="rel-badge rel-high">●●●</span> Fiable</span>
+      <span><span class="rel-badge rel-mid">●●○</span> Partiel</span>
+      <span><span class="rel-badge rel-low">●○○</span> Insuffisant</span>
+    </div>
+    <div class="rank-grid">
+      <div class="rank-card"><div class="rank-card-head"><span style="font-size:20px">🔥</span><div><div class="rank-card-title" style="color:#e8a838">Envie</div><div class="rank-card-sub">Désirabilité relative</div></div></div>${makeList(byE,'envie','#e8a838')}</div>
+      <div class="rank-card"><div class="rank-card-head"><span style="font-size:20px">📡</span><div><div class="rank-card-title" style="color:#4ea8de">Probabilité</div><div class="rank-card-sub">Réalisme relatif</div></div></div>${makeList(byP,'prob','#4ea8de')}</div>
+      <div class="rank-card"><div class="rank-card-head"><span style="font-size:20px">⚡</span><div><div class="rank-card-title" style="color:#c77dff">Priorité</div><div class="rank-card-sub">Envie × Probabilité</div></div></div>${makeList(byPr,'pri','#c77dff')}</div>
+    </div>${legendHtml}`;
+}
+
+let expSearch='',expOpenId=null;
+function renderExperiences(){
+  const el=document.getElementById('exp-content');
+  const glossHtml=`
+    <div class="section-title">Glossaire des expériences</div>
+    <div class="glossaire-card">
+      <div class="glossaire-head">Modifie emoji et libellé — sauvegarde automatique</div>
+      ${state.experiences.map(e=>`<div class="glossaire-item">
+        <input class="glos-emoji-input" value="${e.emoji}" oninput="updateExp('${e.id}','emoji',this.value)" maxlength="2">
+        <input class="glos-label-input" value="${e.label}" oninput="updateExp('${e.id}','label',this.value)">
+        <button class="glos-del" onclick="deleteExp('${e.id}')">×</button>
+      </div>`).join('')}
+    </div>
+    <button class="btn-add-exp" onclick="addExp()">+ Ajouter une expérience</button>`;
+
+  const filtered=expSearch?state.people.filter(p=>p.name.toLowerCase().includes(expSearch.toLowerCase())):state.people;
+  const personsHtml=`
+    <div class="section-title">Expériences par personne</div>
+    <input class="exp-search" placeholder="Rechercher une personne…" value="${expSearch}" oninput="expSearch=this.value;renderExperiences()">
+    <div class="person-exp-list">
+      ${filtered.map(p=>{
+        const checked=state.personExperiences[p.id]||[];
+        const icons=getPersonIcons(p.id);
+        const isOpen=expOpenId===p.id;
+        return `<div class="person-exp-card">
+          <div class="person-exp-head" onclick="expOpenId=expOpenId==='${p.id}'?null:'${p.id}';renderExperiences()">
+            <span class="person-exp-name">${p.name}</span>
+            <span class="person-exp-icons">${icons||'<span style="color:#3a3a45;font-size:12px">aucune</span>'}</span>
+          </div>
+          <div class="person-exp-body ${isOpen?'open':''}">
+            <div class="exp-grid">
+              ${state.experiences.map(e=>`<div class="exp-check ${checked.includes(e.id)?'checked':''}" onclick="toggleExp('${p.id}','${e.id}')">
+                <span class="exp-check-emoji">${e.emoji}</span>
+                <span class="exp-check-label">${e.label}</span>
+              </div>`).join('')}
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  el.innerHTML=glossHtml+'<div style="height:16px"></div>'+personsHtml;
+}
+function toggleExp(pid,eid){
+  if(!state.personExperiences[pid])state.personExperiences[pid]=[];
+  const arr=state.personExperiences[pid],idx=arr.indexOf(eid);
+  if(idx===-1)arr.push(eid);else arr.splice(idx,1);
+  saveData();renderExperiences();
+}
+function updateExp(eid,field,value){const e=state.experiences.find(x=>x.id===eid);if(e){e[field]=value;saveData();}}
+function deleteExp(eid){
+  if(!confirm('Supprimer cette expérience ?'))return;
+  state.experiences=state.experiences.filter(e=>e.id!==eid);
+  for(const pid of Object.keys(state.personExperiences))state.personExperiences[pid]=state.personExperiences[pid].filter(id=>id!==eid);
+  saveData();renderExperiences();
+}
+function addExp(){state.experiences.push({id:makeExpId(),emoji:'⭐',label:'Nouvelle expérience'});saveData();renderExperiences();}
+
+let editingId=null;
+function renderManage(){
+  const el=document.getElementById('person-list');
+  if(!state.people.length){el.innerHTML='<div style="padding:20px;color:#6b6b80;text-align:center">Aucune personne.</div>';return;}
+  el.innerHTML=`<div class="person-list-head"><span>${state.people.length} personnes</span><span>comp.</span></div>`;
+  state.people.forEach(p=>{
+    const comps=state.scores[p.id]?(state.scores[p.id].envie_count||0):0;
+    const row=document.createElement('div');
+    row.className='person-row'+(editingId===p.id?' editing':'');
+    if(editingId===p.id){
+      const inp=document.createElement('input');inp.className='edit-input';inp.value=p.name;
+      inp.addEventListener('keydown',e=>{if(e.key==='Enter')saveName(p.id,inp.value);if(e.key==='Escape'){editingId=null;renderManage();}});
+      const btnS=document.createElement('button');btnS.className='btn-save';btnS.textContent='✓';btnS.onclick=()=>saveName(p.id,inp.value);
+      const btnC=document.createElement('button');btnC.className='btn-cancel-sm';btnC.textContent='✕';btnC.onclick=()=>{editingId=null;renderManage();};
+      row.appendChild(inp);row.appendChild(btnS);row.appendChild(btnC);
+      el.appendChild(row);setTimeout(()=>inp.focus(),50);
+    }else{
+      const nEl=document.createElement('span');nEl.className='person-name';nEl.textContent=p.name;
+      const cEl=document.createElement('span');cEl.className='person-comps';cEl.textContent=comps+' comp.';
+      const bE=document.createElement('button');bE.className='icon-btn';bE.textContent='✎';bE.style.color='#4ea8de';bE.onclick=()=>{editingId=p.id;renderManage();};
+      const bD=document.createElement('button');bD.className='icon-btn';bD.textContent='×';bD.style.color='#ff6b6b';bD.onclick=()=>deletePerson(p.id);
+      row.appendChild(nEl);row.appendChild(cEl);row.appendChild(bE);row.appendChild(bD);
+      el.appendChild(row);
+    }
+  });
+}
+function addPerson(){
+  const inp=document.getElementById('new-name'),name=inp.value.trim();
+  if(!name)return;
+  if(state.people.some(p=>p.name.toLowerCase()===name.toLowerCase())){showFlash('Déjà dans la liste');return;}
+  state.people.push({id:makeId(),name});saveData();inp.value='';initSession();renderManage();showFlash('Ajouté : '+name);
+}
+function saveName(id,newName){
+  newName=newName.trim();if(!newName)return;
+  if(state.people.some(p=>p.id!==id&&p.name.toLowerCase()===newName.toLowerCase())){showFlash('Ce nom existe déjà');return;}
+  const p=state.people.find(p=>p.id===id);if(p)p.name=newName;
+  saveData();editingId=null;renderManage();showFlash('Nom modifié');
+}
+function deletePerson(id){
+  if(!confirm('Supprimer cette personne ?'))return;
+  state.people=state.people.filter(p=>p.id!==id);
+  delete state.scores[id];delete state.personExperiences[id];
+  for(const key of Object.keys(state.comparisons)){const pts=key.split('|');if(pts[0]===id||pts[1]===id)delete state.comparisons[key];}
+  saveData();editingId=null;initSession();renderManage();showFlash('Supprimé');
+}
+function resetScores(){
+  if(!confirm('Réinitialiser tous les scores ?'))return;
+  state.scores={};state.comparisons={};saveData();initSession();renderManage();showFlash('Scores réinitialisés');
+}
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='relations-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);showFlash('Exporté');
+}
+function importJSON(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const p=JSON.parse(e.target.result);
+      if(!p.people||!Array.isArray(p.people))throw new Error('Format invalide');
+      if(!confirm('Remplacer les données actuelles ?'))return;
+      if(!p.experiences)p.experiences=DEFAULT_EXPERIENCES;
+      if(!p.personExperiences)p.personExperiences={};
+      state=p;saveData();initSession();renderManage();showFlash('Importé — '+state.people.length+' personnes');
+    }catch(err){alert('Fichier invalide : '+err.message);}
+  };
+  reader.readAsText(file);event.target.value='';
+}
+initSession();renderCompare();renderManage();
+</script>
+</body>
+</html>
