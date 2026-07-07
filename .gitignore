@@ -1,0 +1,8 @@
+# Sauvegardes privées de l'app Relations
+relations-backup-*.json
+relations-data.json
+*.backup.json
+
+# Fichiers système inutiles
+.DS_Store
+Thumbs.db
